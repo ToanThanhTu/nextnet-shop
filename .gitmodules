@@ -1,6 +1,6 @@
 [submodule "net-backend"]
 	path = net-backend
-	url = git@github.com:ToanThanhTu/nextnet-shop-backend.git
+	url = https://github.com/ToanThanhTu/nextnet-shop-backend.git
 [submodule "next-frontend"]
 	path = next-frontend
-	url = git@github.com:ToanThanhTu/nextnet-shop-frontend.git
+	url = https://github.com/ToanThanhTu/nextnet-shop-frontend.git
