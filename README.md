@@ -5,7 +5,7 @@ A learning-project e-commerce site. Two submodules behind a thin parent: a Next.
 ## Stack
 
 - **Frontend** ([next-frontend/](next-frontend)): Next.js 15 (App Router, Turbopack), React 19, TypeScript, Tailwind CSS, Material UI, Redux Toolkit. Package manager: Bun.
-- **Backend** ([net-backend/](net-backend)): .NET 9 Minimal API, EF Core 9, JWT (configured, currently unenforced; see `net-backend/CLAUDE.md`), NSwag/Swagger.
+- **Backend** ([net-backend/](net-backend)): .NET 9 Minimal API, EF Core 9, JWT bearer auth (config-driven via `JwtOptions`), NSwag/Swagger. Domain-driven feature folders with `RequireAuthorization`/`"Admin"` policies on writes.
 - **Database**: PostgreSQL 17. Local dev runs in Docker; prod is an unmanaged Fly Postgres cluster (`nextnetshop-db`).
 - **Deployment**: Frontend → Vercel. Backend → Fly.io (`nextnetshop-backend`).
 
@@ -135,6 +135,26 @@ bun dev
 Open http://localhost:3000. The homepage should render with categories and products. Try registering a user and adding to cart.
 
 ---
+
+## Production deploy checklist (Fly.io backend)
+
+The backend reads its JWT signing key from the `Jwt__SigningKey` env var. In dev, `appsettings.json` has a placeholder key; in prod, set a real secret on the Fly app once:
+
+```bash
+fly secrets set Jwt__SigningKey=$(openssl rand -hex 32) -a nextnetshop-backend
+fly secrets list -a nextnetshop-backend     # confirms the digest
+```
+
+Other prod env you may need to set:
+
+| Secret / config | Purpose |
+|---|---|
+| `Jwt__SigningKey` | HMAC-SHA256 signing key for issued tokens |
+| `Jwt__Issuer`, `Jwt__Audience` | Override `appsettings.json` defaults if you change them |
+| `Cors__AllowedOrigins__0` | Frontend origin (e.g. `https://your-app.vercel.app`); add `__1`, `__2` for more |
+| `DATABASE_URL` | Already set to the Fly Postgres `.flycast` URL |
+
+Rotating `Jwt__SigningKey` invalidates every existing token (everyone gets logged out). That's the only failure mode worth knowing.
 
 ## Daily workflow (after setup)
 

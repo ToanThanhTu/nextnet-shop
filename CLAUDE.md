@@ -5,6 +5,13 @@ Project-wide conventions and the local development workflow. Stack-specific rule
 - [next-frontend/CLAUDE.md](next-frontend/CLAUDE.md)
 - [net-backend/CLAUDE.md](net-backend/CLAUDE.md)
 
+## Architecture
+
+Both stacks follow Domain-Driven Design (per `~/.claude/rules/backend-ddd.md` and `~/.claude/rules/react-architecture.md`):
+
+- **Frontend**: domain-organised under `next-frontend/src/modules/<domain>/` (products, categories, users, cart, orders). Each module owns its entities, API client, and (where applicable) Redux slice. UI components live in `next-frontend/src/app/components/`.
+- **Backend**: feature-folder layout (`net-backend/<Feature>/`) with one `*Endpoints.cs` per feature. Authorization wired up at registration time via `RequireAuthorization()` and `"Admin"` policy. JWT issuance/validation share a single `JwtOptions` config section.
+
 ## Stack at a glance
 
 | Layer | Tech | Runs in |
@@ -122,6 +129,19 @@ git submodule update --remote --merge      # pull latest main on each submodule
 ```
 
 When committing changes that span the parent and a submodule, commit inside the submodule first, then commit the updated submodule pointer in the parent. Don't push the parent without pushing the submodule, or others will get a "missing commit" error.
+
+## Production secrets (Fly.io)
+
+The backend reads `Jwt__SigningKey` from env. Set it once per Fly app:
+
+```bash
+fly secrets set Jwt__SigningKey=$(openssl rand -hex 32) -a nextnetshop-backend
+fly secrets list -a nextnetshop-backend
+```
+
+Rotate by re-running `fly secrets set` with a new value; all existing JWTs become invalid (everyone is logged out). The dev value in `appsettings.json` is a non-secret placeholder and is fine to commit.
+
+`Cors__AllowedOrigins__0` should be set to the prod frontend origin (e.g. the Vercel URL).
 
 ## Style and conventions
 
