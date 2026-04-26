@@ -1,0 +1,43 @@
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: nextnetshop_backend
+      POSTGRES_PASSWORD: TR515CPdLf6hmbI
+      POSTGRES_DB: nextnetshop_backend
+    ports:
+      - "15432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nextnetshop_backend -d nextnetshop_backend"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./net-backend
+      dockerfile: Dockerfile.dev
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      DOTNET_USE_POLLING_FILE_WATCHER: "1"
+      DOTNET_WATCH_SUPPRESS_BROWSER_REFRESH: "1"
+      ConnectionStrings__DATABASE_URL: postgres://nextnetshop_backend:TR515CPdLf6hmbI@db:5432/nextnetshop_backend?sslmode=disable
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./net-backend:/src
+      - backend_bin:/src/bin
+      - backend_obj:/src/obj
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  backend_bin:
+  backend_obj:
