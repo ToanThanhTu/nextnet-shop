@@ -5,7 +5,7 @@ A learning-project e-commerce site. Two submodules behind a thin parent: a Next.
 ## Stack
 
 - **Frontend** ([next-frontend/](next-frontend)): Next.js 15 (App Router, Turbopack), React 19, TypeScript, Tailwind CSS, Material UI, Redux Toolkit. Package manager: Bun.
-- **Backend** ([net-backend/](net-backend)): .NET 9 Minimal API, EF Core 9, JWT bearer auth (config-driven via `JwtOptions`), NSwag/Swagger. Domain-driven feature folders with `RequireAuthorization`/`"Admin"` policies on writes.
+- **Backend** ([net-backend/](net-backend)): .NET 9 modular monolith. ASP.NET Core MVC controllers grouped under `Modules/<Feature>/` with full DDD layers (Domain / Infrastructure / Application / Contracts) per feature. EF Core 9, JWT bearer auth (config-driven via `JwtOptions`), NSwag/Swagger, RFC 7807 ProblemDetails via a global exception handler.
 - **Database**: PostgreSQL 17. Local dev runs in Docker; prod is an unmanaged Fly Postgres cluster (`nextnetshop-db`).
 - **Deployment**: Frontend → Vercel. Backend → Fly.io (`nextnetshop-backend`).
 
@@ -155,6 +155,22 @@ Other prod env you may need to set:
 | `DATABASE_URL` | Already set to the Fly Postgres `.flycast` URL |
 
 Rotating `Jwt__SigningKey` invalidates every existing token (everyone gets logged out). That's the only failure mode worth knowing.
+
+## Continuing work on another device
+
+Already-set-up project on a different laptop; pick up where you left off:
+
+```bash
+cd ~/Projects/nextnet-shop      # or wherever you cloned
+git pull
+git submodule update --remote --merge   # latest commits in each submodule
+docker compose up -d                    # if containers aren't already running
+cd next-frontend && bun install         # in case lockfile changed
+```
+
+If switching devices mid-task, push your work-in-progress first from the old device (commit, push) and pull from the new one. The submodule pointer convention is "commit submodule first, push submodule, then commit + push the parent": otherwise the parent will reference a SHA the new device can't fetch.
+
+For a brand-new device that never had this project, follow the **First-time setup on a fresh machine** section above.
 
 ## Daily workflow (after setup)
 

@@ -7,10 +7,14 @@ Project-wide conventions and the local development workflow. Stack-specific rule
 
 ## Architecture
 
-Both stacks follow Domain-Driven Design (per `~/.claude/rules/backend-ddd.md` and `~/.claude/rules/react-architecture.md`):
+Both stacks follow Domain-Driven Design (per `~/.claude/rules/backend-ddd.md` and `~/.claude/rules/react-architecture.md`), with a shared `Modules/` (or `modules/`) parent folder that separates bounded contexts from cross-cutting infrastructure.
 
-- **Frontend**: domain-organised under `next-frontend/src/modules/<domain>/` (products, categories, users, cart, orders). Each module owns its entities, API client, and (where applicable) Redux slice. UI components live in `next-frontend/src/app/components/`.
-- **Backend**: feature-folder layout (`net-backend/<Feature>/`) with one `*Endpoints.cs` per feature. Authorization wired up at registration time via `RequireAuthorization()` and `"Admin"` policy. JWT issuance/validation share a single `JwtOptions` config section.
+- **Frontend** (`next-frontend/src/modules/<domain>/`): products, categories, users, cart, orders. Each module owns its entities, API client, and (where applicable) Redux slice. UI components live in `next-frontend/src/app/components/`.
+- **Backend** (`net-backend/Modules/<Feature>/`): each module is a bounded context with full DDD layers: `Domain/` (interfaces + domain services), `Infrastructure/` (EF Core repositories), `Application/Queries/` and `Application/Commands/` (one Handler per use case), `Contracts/` (DTOs + validated requests), plus a thin MVC `<Feature>Controller` and `<Feature>Module` for DI registration. Cross-cutting code stays at the project root: `Configuration/` (service registration), `Common/` (Auth helpers + typed exception hierarchy), `Data/` (DbContext), `Migrations/`.
+
+Authorization is attribute-driven at the controller (`[Authorize]`, `[Authorize(Policy = "Admin")]`); the `"Admin"` policy and JWT issuance/validation share a single `JwtOptions` config section. User identity for "operate on the caller's own data" endpoints comes from the JWT `NameIdentifier` claim via `User.GetRequiredUserId()`, never from a path parameter.
+
+Domain exceptions extend `AppException` and map to RFC 7807 ProblemDetails responses via a global `IExceptionHandler`. Multi-aggregate writes (e.g. `OrderPlacement.PlaceFromCartAsync`) wrap in `BeginTransactionAsync`.
 
 ## Stack at a glance
 

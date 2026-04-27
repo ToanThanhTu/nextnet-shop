@@ -528,3 +528,8 @@ $RECYCLE.BIN/
 # Vim temporary swap files
 *.swp
 
+
+# Personal demo prep docs (untracked, time-sensitive)
+auditcover-demo-prep.md
+WISHLIST_PLAN.md
+WISHLIST_DEMO.md
